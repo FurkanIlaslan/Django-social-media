@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Bildirimler{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary to-accent p-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-white">🔔 Bildirimler</h1>
+                <p class="text-white/80 mt-1">Tüm aktiviteleriniz</p>
+            </div>
+            {% if notifications %}
+                <button onclick="markAllRead()" 
+                        class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                    Tümünü Okundu İşaretle
+                </button>
+            {% endif %}
+        </div>
+
+        <!-- Notifications List -->
+        <div id="notifications-container" class="divide-y divide-gray-200">
+            {% if notifications %}
+                {% for notif in notifications %}
+                    <div class="notification-item p-4 hover:bg-gray-50 transition-colors {% if not notif.is_read %}bg-blue-50{% endif %}"
+                         data-notification-id="{{ notif.id }}"
+                         data-is-read="{{ notif.is_read|yesno:'true,false' }}">
+                        <a href="{{ notif.get_url }}" 
+                           onclick="markAsRead({{ notif.id }}); return true;"
+                           class="flex items-start space-x-4">
+                            <!-- Avatar -->
+                            <div class="flex-shrink-0 relative">
+                                {% if notif.sender.profile.avatar %}
+                                    <img src="{{ notif.sender.profile.avatar.url }}" 
+                                         alt="{{ notif.sender.username }}"
+                                         class="w-12 h-12 rounded-full object-cover ring-2 {% if not notif.is_read %}ring-primary{% else %}ring-gray-200{% endif %}">
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold ring-2 {% if not notif.is_read %}ring-primary{% else %}ring-gray-200{% endif %}">
+                                        {{ notif.sender.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                                <!-- Icon Badge -->
+                                <span class="absolute -bottom-1 -right-1 text-lg">{{ notif.get_icon }}</span>
+                            </div>
+
+                            <!-- Content -->
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900 {% if not notif.is_read %}font-semibold{% endif %}">
+                                    <span class="font-bold text-primary">{{ notif.sender.username }}</span>
+                                    {% if notif.notification_type == 'like' %}
+                                        gönderinizi beğendi
+                                    {% elif notif.notification_type == 'comment' %}
+                                        gönderinize yorum yaptı
+                                    {% elif notif.notification_type == 'reply' %}
+                                        yorumunuza yanıt verdi
+                                    {% elif notif.notification_type == 'follow' %}
+                                        sizi takip etmeye başladı
+                                    {% elif notif.notification_type == 'message' %}
+                                        size mesaj gönderdi
+                                    {% endif %}
+                                </p>
+                                
+                                <!-- Post Preview -->
+                                {% if notif.post %}
+                                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">
+                                        {{ notif.post.content|truncatewords:15 }}
+                                    </p>
+                                {% endif %}
+                                
+                                <!-- Comment Preview -->
+                                {% if notif.comment %}
+                                    <div class="mt-1 bg-gray-100 rounded-lg px-3 py-2">
+                                        <p class="text-xs text-gray-700 line-clamp-2">
+                                            "{{ notif.comment.content|truncatewords:12 }}"
+                                        </p>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Time -->
+                                <p class="text-xs text-gray-400 mt-2">
+                                    {{ notif.created_at|timesince }} önce
+                                </p>
+                            </div>
+
+                            <!-- Unread Indicator -->
+                            {% if not notif.is_read %}
+                                <div class="flex-shrink-0">
+                                    <span class="inline-block w-2 h-2 bg-primary rounded-full"></span>
+                                </div>
+                            {% endif %}
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="p-12 text-center">
+                    <svg class="mx-auto h-24 w-24 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Henüz bildiriminiz yok</h3>
+                    <p class="text-gray-500 mb-6">Yeni aktiviteler olduğunda burada görünecek</p>
+                    <a href="{% url 'feed' %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:shadow-lg transition-all">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        Ana Sayfaya Git
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function markAsRead(notificationId) {
+        const notifElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+        if (notifElement && notifElement.dataset.isRead === 'false') {
+            fetch(`/notifications/${notificationId}/read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      notifElement.classList.remove('bg-blue-50');
+                      notifElement.dataset.isRead = 'true';
+                      updateUnreadBadge();
+                  }
+              });
+        }
+    }
+
+    function markAllRead() {
+        fetch('/notifications/mark-all-read/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  document.querySelectorAll('.notification-item').forEach(item => {
+                      item.classList.remove('bg-blue-50');
+                      item.dataset.isRead = 'true';
+                  });
+                  document.querySelectorAll('.notification-item .w-2.h-2').forEach(dot => {
+                      dot.remove();
+                  });
+                  updateUnreadBadge();
+                  location.reload();
+              }
+          });
+    }
+
+    function updateUnreadBadge() {
+        fetch('/notifications/unread-count/')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('notification-badge');
+                if (badge) {
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            });
+    }
+</script>
+{% endblock %}

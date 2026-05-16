@@ -1,0 +1,240 @@
+{% load i18n %}
+<!doctype html>
+<html lang="tr" class="h-full">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{% block title %}SocialSite{% endblock %}</title>
+    <!-- Tailwind via CDN for quick prototyping -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+      [x-cloak] { display: none !important; }
+    </style>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#7c3aed',
+                light: '#9f7aea'
+              },
+              accent: '#ec4899'
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui']
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Dark Mode Script (sayfa yüklenmeden önce çalışır) -->
+    <script>
+      // LocalStorage'dan tema tercihini oku
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    </script>
+  </head>
+  <body class="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100 h-full font-sans transition-colors duration-200">
+    <nav class="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-b dark:border-gray-700 sticky top-0 z-40">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex items-center gap-4">
+            <a href="/" class="text-2xl font-extrabold text-primary">SocialSite</a>
+            <div class="hidden sm:block">
+              <form action="{% url 'search' %}" method="GET" class="relative">
+                <input 
+                  type="text" 
+                  name="q" 
+                  aria-label="{% trans 'Ara' %}" 
+                  class="pl-10 pr-4 py-2 w-72 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30" 
+                  placeholder="{% trans 'Kullanıcı veya gönderi ara...' %}"
+                  value="{{ request.GET.q }}"
+                >
+                <button type="submit" class="absolute left-3 top-2.5">
+                  <svg class="w-5 h-5 text-gray-400 hover:text-primary transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+                </button>
+              </form>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            {% if user.is_authenticated %}
+              <!-- Dark Mode Toggle -->
+              <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Tema değiştir">
+                <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                </svg>
+                <svg id="theme-toggle-light-icon" class="w-5 h-5 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+                </svg>
+              </button>
+              
+              <!-- Language Switcher -->
+              <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center gap-1 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="{% trans 'Dil değiştir' %}">
+                  <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                  </svg>
+                  <span class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}</span>
+                  <svg class="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                
+                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
+                  {% get_available_languages as languages %}
+                  {% get_current_language as LANGUAGE_CODE %}
+                  {% for lang_code, lang_name in languages %}
+                    <form action="{% url 'set_language' %}" method="post" class="inline-block w-full">
+                      {% csrf_token %}
+                      <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                      <input name="language" type="hidden" value="{{ lang_code }}">
+                      <button type="submit" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {% if lang_code == LANGUAGE_CODE %}bg-primary/10 text-primary font-semibold{% else %}text-gray-700 dark:text-gray-300{% endif %}">
+                        <span class="inline-block w-6">{% if lang_code == LANGUAGE_CODE %}✓{% endif %}</span>
+                        {{ lang_name }}
+                      </button>
+                    </form>
+                  {% endfor %}
+                </div>
+              </div>
+              
+              <a href="/feed/" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{% trans 'Akış' %}</a>
+              <a href="/messages/" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{% trans 'Mesajlar' %}</a>
+              
+              <!-- Notifications Bell -->
+              <a href="/notifications/" class="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <!-- Unread Badge -->
+                <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">
+                  0
+                </span>
+              </a>
+              
+              <!-- Profile Dropdown -->
+              <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none">
+                  {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-600">
+                  {% else %}
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white font-semibold">
+                      {{ user.username.0|upper }}
+                    </div>
+                  {% endif %}
+                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                
+                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 py-1">
+                  <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.username }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ user.email }}</p>
+                  </div>
+                  <a href="{% url 'profile' username=user.username %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <svg class="w-4 h-4 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    {% trans 'Profilim' %}
+                  </a>
+                  <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <svg class="w-4 h-4 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    {% trans 'Ayarlar' %}
+                  </a>
+                  <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                  <a href="/logout/" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <svg class="w-4 h-4 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    {% trans 'Çıkış Yap' %}
+                  </a>
+                </div>
+              </div>
+            {% else %}
+              <a href="/login" class="text-sm text-gray-600 hover:text-gray-900">{% trans 'Giriş' %}</a>
+              <a href="/signup" class="ml-2 text-sm bg-gradient-to-r from-primary to-accent text-white px-3 py-1.5 rounded-full shadow">{% trans 'Kayıt Ol' %}</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    {% block messages %}
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="rounded-lg p-3 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-100{% else %}bg-green-50 text-green-700 border border-green-100{% endif %}">
+              {{ message }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% endblock messages %}
+
+    {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center text-sm text-gray-500 py-6">
+      © {{ now.year }} SocialSite
+    </footer>
+    
+    <!-- Notification Badge Update Script -->
+    {% if user.is_authenticated %}
+    <script>
+        function updateNotificationBadge() {
+            fetch('/notifications/unread-count/')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notification-badge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error updating notification badge:', error));
+        }
+        
+        // Initial load
+        updateNotificationBadge();
+        
+        // Update every 30 seconds
+        setInterval(updateNotificationBadge, 30000);
+    </script>
+    {% endif %}
+    
+    <!-- Dark Mode Toggle Script -->
+    <script>
+      function toggleDarkMode() {
+        const html = document.documentElement;
+        const isDark = html.classList.contains('dark');
+        
+        if (isDark) {
+          html.classList.remove('dark');
+          localStorage.theme = 'light';
+        } else {
+          html.classList.add('dark');
+          localStorage.theme = 'dark';
+        }
+      }
+    </script>
+  </body>
+</html>

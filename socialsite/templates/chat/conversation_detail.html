@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ other_user.username }} ile Sohbet{% endblock %}
+
+{# Mesaj bildirimlerini bu sayfada gösterme #}
+{% block messages %}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col" style="height: calc(100vh - 150px);">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary to-accent p-4 flex items-center space-x-4">
+            <a href="{% url 'conversation_list' %}" class="text-white hover:text-white/80 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            
+            <a href="{% url 'profile' other_user.username %}" class="flex items-center space-x-3 flex-1 hover:opacity-80 transition-opacity">
+                {% if other_user.profile.avatar %}
+                    <img src="{{ other_user.profile.avatar.url }}" 
+                         alt="{{ other_user.username }}"
+                         class="w-10 h-10 rounded-full object-cover ring-2 ring-white/30">
+                {% else %}
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold ring-2 ring-white/30">
+                        {{ other_user.username|first|upper }}
+                    </div>
+                {% endif %}
+                <div>
+                    <h2 class="text-white font-semibold">{{ other_user.username }}</h2>
+                    {% if other_user.profile.bio %}
+                        <p class="text-white/70 text-sm truncate max-w-xs">{{ other_user.profile.bio }}</p>
+                    {% endif %}
+                </div>
+            </a>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flex {% if message.sender == user %}justify-end{% else %}justify-start{% endif %}" data-message-id="{{ message.id }}">
+                        <div class="flex items-end space-x-2 max-w-xs lg:max-w-md {% if message.sender == user %}flex-row-reverse space-x-reverse{% endif %}">
+                            <!-- Avatar -->
+                            {% if message.sender != user %}
+                                {% if message.sender.profile.avatar %}
+                                    <img src="{{ message.sender.profile.avatar.url }}" 
+                                         alt="{{ message.sender.username }}"
+                                         class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                {% else %}
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                        {{ message.sender.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            
+                            <!-- Message Bubble -->
+                            <div>
+                                <div class="{% if message.sender == user %}bg-gradient-to-r from-primary to-accent text-white{% else %}bg-white text-gray-800{% endif %} rounded-2xl px-4 py-2 shadow-sm">
+                                    <p class="text-sm break-words">{{ message.content }}</p>
+                                </div>
+                                <span class="text-xs text-gray-400 mt-1 block {% if message.sender == user %}text-right{% endif %}">
+                                    {{ message.created_at|date:"H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-center text-gray-400">
+                        <svg class="mx-auto h-16 w-16 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        <p class="text-sm">Henüz mesaj yok. İlk mesajı gönderin!</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Message Input -->
+        <div class="bg-white border-t border-gray-200 p-4">
+            <form id="message-form" class="flex space-x-3">
+                {% csrf_token %}
+                <input type="text" 
+                       id="message-input"
+                       name="content"
+                       placeholder="Mesajınızı yazın..." 
+                       class="flex-1 rounded-full border border-gray-300 px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                       autocomplete="off"
+                       required>
+                <button type="submit" 
+                        class="bg-gradient-to-r from-primary to-accent text-white rounded-full px-6 py-2.5 font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                    <span>Gönder</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const conversationId = {{ conversation.id }};
+    const messagesContainer = document.getElementById('messages-container');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    let lastMessageId = {{ messages.last.id|default:0 }};
+
+    // Scroll to bottom on page load
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    scrollToBottom();
+
+    // Send message
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        const formData = new FormData(messageForm);
+        const submitBtn = messageForm.querySelector('button[type="submit"]');
+        
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`/messages/${conversationId}/send/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Add message to UI
+                addMessageToUI(data.message);
+                messageInput.value = '';
+                lastMessageId = data.message.id;
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert('Mesaj gönderilemedi. Lütfen tekrar deneyin.');
+        } finally {
+            submitBtn.disabled = false;
+            messageInput.focus();
+        }
+    });
+
+    // Add message to UI
+    function addMessageToUI(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex ${message.is_own ? 'justify-end' : 'justify-start'}`;
+        messageDiv.setAttribute('data-message-id', message.id);
+        
+        messageDiv.innerHTML = `
+            <div class="flex items-end space-x-2 max-w-xs lg:max-w-md ${message.is_own ? 'flex-row-reverse space-x-reverse' : ''}">
+                <div>
+                    <div class="${message.is_own ? 'bg-gradient-to-r from-primary to-accent text-white' : 'bg-white text-gray-800'} rounded-2xl px-4 py-2 shadow-sm">
+                        <p class="text-sm break-words">${escapeHtml(message.content)}</p>
+                    </div>
+                    <span class="text-xs text-gray-400 mt-1 block ${message.is_own ? 'text-right' : ''}">
+                        ${message.created_at}
+                    </span>
+                </div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+    }
+
+    // Check for new messages every 3 seconds
+    setInterval(async () => {
+        try {
+            const response = await fetch(`/messages/${conversationId}/new/?last_message_id=${lastMessageId}`);
+            const data = await response.json();
+            
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(message => {
+                    addMessageToUI(message);
+                    lastMessageId = message.id;
+                });
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error('Error fetching new messages:', error);
+        }
+    }, 3000);
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

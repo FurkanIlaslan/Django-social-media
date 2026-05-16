@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Mesajlar{% endblock %}
+
+{# Mesaj bildirimlerini bu sayfada gösterme #}
+{% block messages %}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary to-accent p-6">
+            <h1 class="text-3xl font-bold text-white">💬 Mesajlarım</h1>
+            <p class="text-white/80 mt-1">Aktif konuşmalarınız</p>
+        </div>
+
+        <!-- Conversations List -->
+        <div class="divide-y divide-gray-200">
+            {% if conversation_data %}
+                {% for data in conversation_data %}
+                    <a href="{% url 'conversation_detail' data.conversation.id %}" 
+                       class="block hover:bg-gray-50 transition-colors duration-150">
+                        <div class="p-4 flex items-center space-x-4">
+                            <!-- Avatar -->
+                            <div class="relative flex-shrink-0">
+                                {% if data.other_user.profile.avatar %}
+                                    <img src="{{ data.other_user.profile.avatar.url }}" 
+                                         alt="{{ data.other_user.username }}"
+                                         class="w-14 h-14 rounded-full object-cover ring-2 ring-gray-200">
+                                {% else %}
+                                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xl font-bold ring-2 ring-gray-200">
+                                        {{ data.other_user.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                                {% if data.unread_count > 0 %}
+                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                        {{ data.unread_count }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Content -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1">
+                                    <h3 class="font-semibold text-gray-900 truncate">
+                                        {{ data.other_user.username }}
+                                    </h3>
+                                    {% if data.last_message %}
+                                        <span class="text-xs text-gray-500 ml-2">
+                                            {{ data.last_message.created_at|date:"d M, H:i" }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if data.other_user.profile.bio %}
+                                    <p class="text-xs text-gray-500 truncate mb-1">
+                                        {{ data.other_user.profile.bio }}
+                                    </p>
+                                {% endif %}
+                                {% if data.last_message %}
+                                    <p class="text-sm text-gray-600 truncate {% if data.unread_count > 0 %}font-semibold{% endif %}">
+                                        {% if data.last_message.sender == user %}
+                                            <span class="text-primary">Sen:</span>
+                                        {% endif %}
+                                        {{ data.last_message.content }}
+                                    </p>
+                                {% else %}
+                                    <p class="text-sm text-gray-400 italic">
+                                        Henüz mesaj yok
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Arrow -->
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="p-12 text-center">
+                    <svg class="mx-auto h-24 w-24 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Henüz mesajınız yok</h3>
+                    <p class="text-gray-500 mb-6">Kullanıcı profil sayfalarından mesaj gönderebilirsiniz</p>
+                    <a href="{% url 'search' %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:shadow-lg transition-all">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Kullanıcı Ara
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
