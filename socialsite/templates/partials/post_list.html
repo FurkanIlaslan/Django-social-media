@@ -100,7 +100,7 @@
     {% if post.comments.all %}
     <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
       {% for comment in post.comments.all|slice:":3" %}
-      <div class="flex gap-3">
+      <div class="flex gap-3" data-comment-id="{{ comment.id }}">
         {% if comment.author.profile.avatar %}
           <img src="{{ comment.author.profile.avatar.url }}" alt="{{ comment.author.username }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-600">
         {% else %}
@@ -113,7 +113,14 @@
             <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ comment.author.username }}</p>
             <p class="text-sm text-gray-700 dark:text-gray-300">{{ comment.content }}</p>
           </div>
-          <div class="text-xs text-gray-400 mt-1 ml-3">{{ comment.created_at|timesince }} önce</div>
+          <div class="flex items-center gap-4 mt-1 ml-3 text-xs text-gray-400">
+            <span>{{ comment.created_at|timesince }} önce</span>
+            {% if comment.author == user %}
+            <button onclick="deleteComment({{ comment.id }})" class="hover:text-red-500 font-semibold transition">
+              Sil
+            </button>
+            {% endif %}
+          </div>
         </div>
       </div>
       {% endfor %}

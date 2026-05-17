@@ -498,6 +498,45 @@
     document.getElementById('reportObjectId').value = objectId;
   }
 
+  // Yorum silme
+  function deleteComment(commentId) {
+    if (!confirm('Bu yorumu silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+    
+    const currentLang = document.documentElement.lang || 'tr';
+    
+    fetch(`/${currentLang}/api/posts/comment/${commentId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Yorumu sayfadan kaldır
+        const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
+        if (commentElement) {
+          commentElement.style.transition = 'opacity 0.3s';
+          commentElement.style.opacity = '0';
+          setTimeout(() => {
+            commentElement.remove();
+          }, 300);
+        }
+        
+        // Başarı mesajı
+        showNotification('Yorum başarıyla silindi! 🗑️', 'success');
+      } else {
+        alert(data.error || 'Bir hata oluştu.');
+      }
+    })
+    .catch(error => {
+      console.error('Hata:', error);
+      alert('Yorum silinirken bir hata oluştu.');
+    });
+  }
+
   // Rapor modalını kapat
   function closeReportModal() {
     document.getElementById('reportModal').classList.add('hidden');
