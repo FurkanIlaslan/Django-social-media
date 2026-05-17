@@ -218,8 +218,18 @@
         // Initial load
         updateNotificationBadge();
         
-        // Update every 30 seconds
-        setInterval(updateNotificationBadge, 30000);
+        // Update every 5 seconds (more responsive)
+        setInterval(updateNotificationBadge, 5000);
+        
+        // Update when window gains focus
+        window.addEventListener('focus', updateNotificationBadge);
+        
+        // Update when page becomes visible (tab switching)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateNotificationBadge();
+            }
+        });
     </script>
     {% endif %}
     
