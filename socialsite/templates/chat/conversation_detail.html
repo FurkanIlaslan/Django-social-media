@@ -108,6 +108,7 @@
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
     let lastMessageId = {{ messages.last.id|default:0 }};
+    const currentLang = document.documentElement.lang || 'tr';
 
     // Scroll to bottom on page load
     function scrollToBottom() {
@@ -128,7 +129,7 @@
         submitBtn.disabled = true;
         
         try {
-            const response = await fetch(`/messages/${conversationId}/send/`, {
+            const response = await fetch(`/${currentLang}/messages/${conversationId}/send/`, {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -179,7 +180,7 @@
     // Check for new messages every 3 seconds
     setInterval(async () => {
         try {
-            const response = await fetch(`/messages/${conversationId}/new/?last_message_id=${lastMessageId}`);
+            const response = await fetch(`/${currentLang}/messages/${conversationId}/new/?last_message_id=${lastMessageId}`);
             const data = await response.json();
             
             if (data.messages && data.messages.length > 0) {
