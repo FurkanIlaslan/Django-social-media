@@ -74,5 +74,5 @@ admin.site.site_header = "🎨 Social Media Admin Panel"
 admin.site.site_title = "Admin Panel"
 admin.site.index_title = "Hoş Geldiniz - Yönetim Paneli"
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Media files - Her ortamda çalışır (WhiteNoise ile)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
