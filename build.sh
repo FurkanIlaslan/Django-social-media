@@ -12,4 +12,8 @@ cd socialsite
 python manage.py collectstatic --no-input
 
 # Apply database migrations
-python manage.py migrate
+python manage.py makemigrations --noinput
+python manage.py migrate --noinput
+
+# Create cache table (if needed)
+python manage.py createcachetable || true
