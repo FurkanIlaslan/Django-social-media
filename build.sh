@@ -17,3 +17,6 @@ python manage.py migrate --noinput
 
 # Create cache table (if needed)
 python manage.py createcachetable || true
+
+# Create superuser automatically
+python create_superuser.py
