@@ -92,6 +92,23 @@ PYTHON_VERSION
 Değer: 3.11.0
 ```
 
+### Cloudinary (Fotoğraflar için - ÖNEMLİ! 📸):
+
+**Cloudinary hesabı oluşturun:** https://cloudinary.com/users/register/free
+
+Dashboard'dan şu bilgileri alıp ekleyin:
+
+```
+CLOUDINARY_CLOUD_NAME
+Değer: (Dashboard'dan Cloud Name)
+
+CLOUDINARY_API_KEY
+Değer: (Dashboard'dan API Key)
+
+CLOUDINARY_API_SECRET
+Değer: (Dashboard'dan API Secret)
+```
+
 ### Otomatik (Render ekler):
 ```
 RENDER_EXTERNAL_HOSTNAME
