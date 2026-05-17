@@ -131,6 +131,11 @@
                                 <button onclick="showReplyForm({{ comment.id }})" class="hover:text-primary font-semibold">
                                     Yanıtla
                                 </button>
+                                {% if comment.author == user %}
+                                <button onclick="deleteComment({{ comment.id }})" class="hover:text-red-500 font-semibold">
+                                    Sil
+                                </button>
+                                {% endif %}
                             </div>
                             
                             <!-- Yanıt Formu (Gizli) -->
@@ -176,8 +181,14 @@
                                             </a>
                                             <p class="text-gray-700 text-sm mt-1">{{ reply.content }}</p>
                                         </div>
-                                        <div class="mt-1 text-xs text-gray-500">
-                                            {{ reply.created_at|timesince }} önce
+                                        <div class="mt-1 text-xs text-gray-500 flex items-center gap-3">
+                                            <span>{{ reply.created_at|timesince }} önce</span>
+                                            {% if reply.author == user %}
+                                            <button onclick="deleteComment({{ reply.id }})" class="hover:text-red-500 font-semibold">
+                                                Sil
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                         </div>
                                     </div>
                                 </div>
@@ -387,6 +398,60 @@ function copyToClipboardDetail(text, button) {
         }, 2000);
     }).catch(err => {
         alert('Kopyalama başarısız: ' + err);
+    });
+}
+
+// Yorum silme
+function deleteComment(commentId) {
+    if (!confirm('Bu yorumu silmek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    const currentLang = document.documentElement.lang || 'tr';
+    
+    fetch(`/${currentLang}/api/posts/comment/${commentId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Yorumu sayfadan kaldır
+            const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`)?.closest('.flex.gap-3, .space-y-6 > div');
+            if (commentElement) {
+                commentElement.style.transition = 'opacity 0.3s';
+                commentElement.style.opacity = '0';
+                setTimeout(() => {
+                    commentElement.remove();
+                    // Yorum sayısını güncelle
+                    const commentCountElements = document.querySelectorAll('.font-semibold');
+                    commentCountElements.forEach(el => {
+                        if (el.textContent.includes('Yorumlar')) {
+                            el.textContent = `Yorumlar (${data.comments_count})`;
+                        }
+                    });
+                }, 300);
+            }
+            
+            // Başarı mesajı
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 bg-green-500 text-white font-medium';
+            notification.textContent = 'Yorum başarıyla silindi! 🗑️';
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.transition = 'opacity 0.3s';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        } else {
+            alert(data.error || 'Bir hata oluştu.');
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        alert('Yorum silinirken bir hata oluştu.');
     });
 }
 </script>

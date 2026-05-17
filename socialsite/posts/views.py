@@ -273,6 +273,32 @@ def delete_post(request, post_id):
 
 
 @login_required
+def delete_comment(request, comment_id):
+    """Yorum silme"""
+    comment = get_object_or_404(Comment, id=comment_id)
+    
+    # Sadece yorum sahibi silebilir
+    if comment.author != request.user:
+        return JsonResponse({'error': 'Bu yorumu silme yetkiniz yok.'}, status=403)
+    
+    if request.method == 'POST':
+        post = comment.post
+        comment.delete()
+        
+        # Post'un yorum sayısını güncelle
+        post.comments_count = post.comments.count()
+        post.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Yorum başarıyla silindi!',
+            'comments_count': post.comments_count
+        })
+    
+    return JsonResponse({'error': 'Geçersiz istek.'}, status=400)
+
+
+@login_required
 def report_content(request):
     """İçerik raporlama (Post, Comment, User)"""
     if request.method != 'POST':
