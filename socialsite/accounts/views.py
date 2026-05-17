@@ -71,26 +71,35 @@ def signup_view(request):
             })
 
         user = User.objects.create_user(username=username, email=email, password=password1)
-        user.is_active = False
+        # Production'da email doğrulama olmadan direkt aktif et
+        user.is_active = True  # Demo için direkt aktif
         user.save()
 
-        token_obj = EmailVerificationToken.objects.create(user=user)
-        activate_url = f"{settings.SITE_URL}/accounts/activate/{token_obj.token}/"
+        # Email doğrulama (opsiyonel - email ayarları varsa)
+        try:
+            if settings.EMAIL_HOST_USER:  # Email ayarları varsa
+                token_obj = EmailVerificationToken.objects.create(user=user)
+                activate_url = f"{settings.SITE_URL}/accounts/activate/{token_obj.token}/"
 
-        send_mail(
-            subject='SocialSite - E-posta adresinizi onaylayin',
-            message=(
-                f"Merhaba {username},\n\n"
-                f"Kaydınızı tamamlamak için asagidaki baglantiya tiklayin:\n\n"
-                f"{activate_url}\n\n"
-                f"--- SocialSite Ekibi"
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=False,
-        )
-
-        return render(request, 'auth/email_sent.html', {'email': email})
+                send_mail(
+                    subject='SocialSite - E-posta adresinizi onaylayin',
+                    message=(
+                        f"Merhaba {username},\n\n"
+                        f"Kaydınızı tamamlamak için asagidaki baglantiya tiklayin:\n\n"
+                        f"{activate_url}\n\n"
+                        f"--- SocialSite Ekibi"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=True,
+                )
+                return render(request, 'auth/email_sent.html', {'email': email})
+        except Exception as e:
+            print(f"Email sending failed: {e}")
+        
+        # Email gönderimi başarısız olursa veya email ayarları yoksa direkt login
+        login(request, user)
+        return redirect('/feed/')
 
     return render(request, 'auth/signup.html')
 
