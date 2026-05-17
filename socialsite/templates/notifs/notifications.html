@@ -114,10 +114,12 @@
 </div>
 
 <script>
+    const currentLang = document.documentElement.lang || 'tr';
+    
     function markAsRead(notificationId) {
         const notifElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
         if (notifElement && notifElement.dataset.isRead === 'false') {
-            fetch(`/notifications/${notificationId}/read/`, {
+            fetch(`/${currentLang}/notifications/${notificationId}/read/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',
@@ -135,7 +137,7 @@
     }
 
     function markAllRead() {
-        fetch('/notifications/mark-all-read/', {
+        fetch(`/${currentLang}/notifications/mark-all-read/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}',
@@ -158,7 +160,7 @@
     }
 
     function updateUnreadBadge() {
-        fetch('/notifications/unread-count/')
+        fetch(`/${currentLang}/notifications/unread-count/`)
             .then(response => response.json())
             .then(data => {
                 const badge = document.getElementById('notification-badge');

@@ -196,8 +196,10 @@
     <!-- Notification Badge Update Script -->
     {% if user.is_authenticated %}
     <script>
+        const currentLang = document.documentElement.lang || 'tr';
+        
         function updateNotificationBadge() {
-            fetch('/notifications/unread-count/')
+            fetch(`/${currentLang}/notifications/unread-count/`)
                 .then(response => response.json())
                 .then(data => {
                     const badge = document.getElementById('notification-badge');
